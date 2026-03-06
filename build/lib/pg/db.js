@@ -17,14 +17,12 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/repositories/person.repository.ts
-var person_repository_exports = {};
-__export(person_repository_exports, {
-  PersonRepository: () => PersonRepository
-});
-module.exports = __toCommonJS(person_repository_exports);
-
 // src/lib/pg/db.ts
+var db_exports = {};
+__export(db_exports, {
+  database: () => database
+});
+module.exports = __toCommonJS(db_exports);
 var import_pg = require("pg");
 
 // src/env/index.ts
@@ -72,24 +70,7 @@ var Database = class {
   }
 };
 var database = new Database();
-
-// src/repositories/person.repository.ts
-var PersonRepository = class {
-  async create({
-    cpf,
-    name,
-    birth,
-    email,
-    user_id
-  }) {
-    const result = await database.clientInstance?.query(
-      `INSERT INTO "person" ("cpf", "name", "birth", "email", "user_id") VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [cpf, name, birth, email, user_id]
-    );
-    return result?.rows[0];
-  }
-};
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  PersonRepository
+  database
 });

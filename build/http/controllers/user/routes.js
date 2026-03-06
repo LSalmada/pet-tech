@@ -17,12 +17,22 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/repositories/person.repository.ts
-var person_repository_exports = {};
-__export(person_repository_exports, {
-  PersonRepository: () => PersonRepository
+// src/http/controllers/user/routes.ts
+var routes_exports = {};
+__export(routes_exports, {
+  userRoutes: () => userRoutes
 });
-module.exports = __toCommonJS(person_repository_exports);
+module.exports = __toCommonJS(routes_exports);
+
+// src/use-cases/create-user.ts
+var CreateUserUseCase = class {
+  constructor(userRepository) {
+    this.userRepository = userRepository;
+  }
+  async handler(user) {
+    return this.userRepository.create(user);
+  }
+};
 
 // src/lib/pg/db.ts
 var import_pg = require("pg");
@@ -73,23 +83,48 @@ var Database = class {
 };
 var database = new Database();
 
-// src/repositories/person.repository.ts
-var PersonRepository = class {
-  async create({
-    cpf,
-    name,
-    birth,
-    email,
-    user_id
-  }) {
+// src/repositories/user.repository.ts
+var UserRepository = class {
+  async create({ username, password }) {
     const result = await database.clientInstance?.query(
-      `INSERT INTO "person" ("cpf", "name", "birth", "email", "user_id") VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [cpf, name, birth, email, user_id]
+      `INSERT INTO "user" ("username", "password") VALUES ($1, $2) RETURNING *`,
+      [username, password]
+    );
+    return result?.rows[0];
+  }
+  async findWithPerson(user_id) {
+    const result = await database.clientInstance?.query(
+      `SELECT * FROM "user" LEFT JOIN "person" ON "user"."id" = "person"."user_id" WHERE "user"."id" = $1`,
+      [user_id]
     );
     return result?.rows[0];
   }
 };
+
+// src/http/controllers/user/create.ts
+var import_zod2 = require("zod");
+async function create(request, reply) {
+  const registerBodySchema = import_zod2.z.object({
+    username: import_zod2.z.string(),
+    password: import_zod2.z.string()
+  });
+  const { username, password } = registerBodySchema.parse(request.body);
+  try {
+    const userRepository = new UserRepository();
+    const createUserUseCase = new CreateUserUseCase(userRepository);
+    const user = await createUserUseCase.handler({ username, password });
+    return reply.status(201).send(user);
+  } catch (error) {
+    console.error(`[CreateUserController] Error creating user: ${error}`);
+    throw new Error(`Error creating user: ${error}`);
+  }
+}
+
+// src/http/controllers/user/routes.ts
+async function userRoutes(app) {
+  app.post("/user", create);
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  PersonRepository
+  userRoutes
 });

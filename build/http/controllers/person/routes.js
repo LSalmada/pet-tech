@@ -24,20 +24,69 @@ __export(routes_exports, {
 });
 module.exports = __toCommonJS(routes_exports);
 
+// src/lib/pg/db.ts
+var import_pg = require("pg");
+
+// src/env/index.ts
+var import_config = require("dotenv/config");
+var import_zod = require("zod");
+var envSchema = import_zod.z.object({
+  NODE_ENV: import_zod.z.enum(["development", "production", "test"]).default("development"),
+  PORT: import_zod.z.coerce.number().default(3e3),
+  DATABASE_USER: import_zod.z.string(),
+  DATABASE_PASSWORD: import_zod.z.string(),
+  DATABASE_NAME: import_zod.z.string(),
+  DATABASE_HOST: import_zod.z.string(),
+  DATABASE_PORT: import_zod.z.coerce.number()
+});
+var _env = envSchema.safeParse(process.env);
+if (!_env.success) {
+  console.error("Invalid environment variables", _env.error.format());
+  throw new Error("Invalid environment variables");
+}
+var env = _env.data;
+
+// src/lib/pg/db.ts
+var CONFIG = {
+  user: env.DATABASE_USER,
+  host: env.DATABASE_HOST,
+  database: env.DATABASE_NAME,
+  password: env.DATABASE_PASSWORD,
+  port: env.DATABASE_PORT
+};
+var Database = class {
+  constructor() {
+    this.pool = new import_pg.Pool(CONFIG);
+    this.connection();
+  }
+  async connection() {
+    try {
+      this.client = await this.pool.connect();
+    } catch (error) {
+      console.error(`Error connecting to the database: ${error}`);
+      throw new Error(`Error connecting to the database: ${error}`);
+    }
+  }
+  get clientInstance() {
+    return this.client;
+  }
+};
+var database = new Database();
+
 // src/repositories/person.repository.ts
 var PersonRepository = class {
-  async findById(id) {
-    return {
-      id,
-      cpf: "12312344545",
-      name: "Person 1",
-      birth: /* @__PURE__ */ new Date("1995-12-32"),
-      email: "user@email.com",
-      user_id: 1
-    };
-  }
-  async create(person) {
-    return person;
+  async create({
+    cpf,
+    name,
+    birth,
+    email,
+    user_id
+  }) {
+    const result = await database.clientInstance?.query(
+      `INSERT INTO "person" ("cpf", "name", "birth", "email", "user_id") VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [cpf, name, birth, email, user_id]
+    );
+    return result?.rows[0];
   }
 };
 
@@ -52,13 +101,13 @@ var CreatePersonUseCase = class {
 };
 
 // src/http/controllers/person/create.ts
-var import_zod = require("zod");
+var import_zod2 = require("zod");
 async function create(request, reply) {
-  const registerBodySchema = import_zod.z.object({
-    cpf: import_zod.z.string(),
-    name: import_zod.z.string(),
-    birth: import_zod.z.date(),
-    email: import_zod.z.email()
+  const registerBodySchema = import_zod2.z.object({
+    cpf: import_zod2.z.string(),
+    name: import_zod2.z.string(),
+    birth: import_zod2.z.coerce.date(),
+    email: import_zod2.z.email()
   });
   const { cpf, name, birth, email } = registerBodySchema.parse(request.body);
   try {

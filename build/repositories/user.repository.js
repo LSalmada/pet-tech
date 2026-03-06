@@ -17,12 +17,12 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/repositories/person.repository.ts
-var person_repository_exports = {};
-__export(person_repository_exports, {
-  PersonRepository: () => PersonRepository
+// src/repositories/user.repository.ts
+var user_repository_exports = {};
+__export(user_repository_exports, {
+  UserRepository: () => UserRepository
 });
-module.exports = __toCommonJS(person_repository_exports);
+module.exports = __toCommonJS(user_repository_exports);
 
 // src/lib/pg/db.ts
 var import_pg = require("pg");
@@ -73,23 +73,24 @@ var Database = class {
 };
 var database = new Database();
 
-// src/repositories/person.repository.ts
-var PersonRepository = class {
-  async create({
-    cpf,
-    name,
-    birth,
-    email,
-    user_id
-  }) {
+// src/repositories/user.repository.ts
+var UserRepository = class {
+  async create({ username, password }) {
     const result = await database.clientInstance?.query(
-      `INSERT INTO "person" ("cpf", "name", "birth", "email", "user_id") VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [cpf, name, birth, email, user_id]
+      `INSERT INTO "user" ("username", "password") VALUES ($1, $2) RETURNING *`,
+      [username, password]
+    );
+    return result?.rows[0];
+  }
+  async findWithPerson(user_id) {
+    const result = await database.clientInstance?.query(
+      `SELECT * FROM "user" LEFT JOIN "person" ON "user"."id" = "person"."user_id" WHERE "user"."id" = $1`,
+      [user_id]
     );
     return result?.rows[0];
   }
 };
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  PersonRepository
+  UserRepository
 });
