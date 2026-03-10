@@ -1,12 +1,12 @@
-import { Address } from '@/entities/address.entity'
-import { Person } from '@/entities/person.entity'
+import { IAddress } from '@/entities/models/address.interface'
+import { IPerson } from '@/entities/models/person.interface'
 
 export interface IAddressRepository {
   findAddressByPersonId(
     personId: number,
     page: number,
     limit: number,
-  ): Promise<(Address & Person)[]>
+  ): Promise<(IAddress & IPerson)[]>
 
-  create(address: Address): Promise<Address> | undefined
+  create(address: IAddress): Promise<IAddress | undefined>
 }

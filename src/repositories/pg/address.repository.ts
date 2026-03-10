@@ -1,14 +1,14 @@
-import { Address } from '@/entities/address.entity'
 import { IAddressRepository } from '../address.repository.interface'
 import { database } from '@/lib/pg/db'
-import { Person } from '@/entities/person.entity'
+import { IAddress } from '@/entities/models/address.interface'
+import { IPerson } from '@/entities/models/person.interface'
 
 export class AddressRepository implements IAddressRepository {
   async findAddressByPersonId(
     personId: number,
     page: number,
     limit: number,
-  ): Promise<(Address & Person)[]> {
+  ): Promise<(IAddress & IPerson)[]> {
     const offset = (page - 1) * limit
 
     const query = `
@@ -19,7 +19,7 @@ export class AddressRepository implements IAddressRepository {
       LIMIT $2 OFFSET $3
     `
 
-    const result = await database.clientInstance?.query<Address & Person>(
+    const result = await database.clientInstance?.query<IAddress & IPerson>(
       query,
       [personId, limit, offset],
     )
@@ -27,7 +27,20 @@ export class AddressRepository implements IAddressRepository {
     return result?.rows || []
   }
 
-  // create(address: Address): Promise<Address> | undefined {
-  //   throw new Error('Method not implemented.')
-  // }
+  async create({
+    street,
+    city,
+    state,
+    zip_code,
+    person_id,
+  }: IAddress): Promise<IAddress | undefined> {
+    const result = await database.clientInstance?.query<IAddress>(
+      `INSERT INTO "address" (street, city, state, zip_code, person_id)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [street, city, state, zip_code, person_id],
+    )
+
+    return result?.rows[0]
+  }
 }
