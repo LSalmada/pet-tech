@@ -4,11 +4,7 @@ import { IAddress } from '@/entities/models/address.interface'
 import { IPerson } from '@/entities/models/person.interface'
 
 export class AddressRepository implements IAddressRepository {
-  async findAddressByPersonId(
-    personId: number,
-    page: number,
-    limit: number,
-  ): Promise<(IAddress & IPerson)[]> {
+  async findAddressByPersonId(personId: number, page: number, limit: number): Promise<(IAddress & IPerson)[]> {
     const offset = (page - 1) * limit
 
     const query = `
@@ -19,21 +15,12 @@ export class AddressRepository implements IAddressRepository {
       LIMIT $2 OFFSET $3
     `
 
-    const result = await database.clientInstance?.query<IAddress & IPerson>(
-      query,
-      [personId, limit, offset],
-    )
+    const result = await database.clientInstance?.query<IAddress & IPerson>(query, [personId, limit, offset])
 
     return result?.rows || []
   }
 
-  async create({
-    street,
-    city,
-    state,
-    zip_code,
-    person_id,
-  }: IAddress): Promise<IAddress | undefined> {
+  async create({ street, city, state, zip_code, person_id }: IAddress): Promise<IAddress | undefined> {
     const result = await database.clientInstance?.query<IAddress>(
       `INSERT INTO "address" (street, city, state, zip_code, person_id)
        VALUES ($1, $2, $3, $4, $5)
