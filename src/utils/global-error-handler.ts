@@ -3,11 +3,7 @@ import { ZodError } from 'zod'
 import { env } from 'process'
 
 interface ErrorHandlerMap {
-  [key: string]: (
-    error: Error | ZodError,
-    request: FastifyRequest,
-    reply: FastifyReply,
-  ) => void
+  [key: string]: (error: Error | ZodError, request: FastifyRequest, reply: FastifyReply) => void
 }
 
 export const errorHandlerMap: ErrorHandlerMap = {
@@ -23,11 +19,7 @@ export const errorHandlerMap: ErrorHandlerMap = {
   },
 }
 
-export const globalErrorHandler = (
-  error: Error,
-  _: FastifyRequest,
-  reply: FastifyReply,
-) => {
+export const globalErrorHandler = (error: Error, _: FastifyRequest, reply: FastifyReply) => {
   if (env.NODE_ENV === 'development') {
     console.error(error)
   }
